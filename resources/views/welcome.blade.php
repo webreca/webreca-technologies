@@ -33,7 +33,7 @@
     </head>
     <body class="font-sans antialiased dark:bg-black dark:text-white/50">
         <video id="background-video" autoplay loop muted>
-            <source src="{{ asset('assets/videos/background.mp4') }}" type="video/mp4">
+            <source src="{{ asset('assets/videos/coming-soon.mp4') }}" type="video/mp4">
         </video>
 
     </body>
