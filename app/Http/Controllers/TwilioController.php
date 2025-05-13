@@ -53,9 +53,11 @@ class TwilioController extends Controller
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('services.openai.key'),
+                'HTTP-Referer' => 'https://yourdomain.com/', // Required
+                'X-Title' => 'LaravelApp', // Optional but recommended
                 'Content-Type' => 'application/json',
-            ])->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-3.5-turbo',
+            ])->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => 'mistralai/mixtral-8x7b', // Or another supported model
                 'messages' => [
                     ['role' => 'system', 'content' => 'You are a helpful assistant.'],
                     ['role' => 'user', 'content' => $message],
@@ -63,19 +65,18 @@ class TwilioController extends Controller
             ]);
 
             if ($response->failed()) {
-                Log::error("❌ ChatGPT API failed: " . $response->body());
+                Log::error("❌ OpenRouter API failed: " . $response->body());
                 return "Sorry, I couldn't process your request.";
             }
 
             $data = $response->json();
-            $chatReply = $data['choices'][0]['message']['content'] ?? 'No response from ChatGPT.';
+            $chatReply = $data['choices'][0]['message']['content'] ?? 'No response from OpenRouter.';
 
-            Log::info("🤖 ChatGPT Response: {$chatReply}");
+            Log::info("🤖 OpenRouter Response: {$chatReply}");
             return $chatReply;
-
         } catch (\Exception $e) {
-            Log::error("❌ ChatGPT Error: " . $e->getMessage());
-            return "Sorry, something went wrong with ChatGPT.";
+            Log::error("❌ OpenRouter Error: " . $e->getMessage());
+            return "Sorry, something went wrong with OpenRouter.";
         }
     }
 }
