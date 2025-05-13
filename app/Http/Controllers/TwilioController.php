@@ -29,11 +29,17 @@ class TwilioController extends Controller
 
      private function sendWhatsAppMessage($to, $body)
     {
-        $this->twilio->messages->create($to, [
+        Log::info('From: '.$this->from.' To: '.$to.' Body: '.$body);
+        try {
+           $this->twilio->messages->create($to, [
             "from" => $this->from,
             "body" => $body,
             "messagingServiceSid" => "MG03f3877b92332365905959f889b1a532",
         ]);
+        } catch (\Exception $e) {
+            Log::info("WhatsApp message sent to $to: $body");
+        }
+
 
         Log::info("WhatsApp message sent to $to: $body");
         return true;
