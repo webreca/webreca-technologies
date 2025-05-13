@@ -10,5 +10,6 @@ class TwilioController extends Controller
     public function handleIncomingMessage(Request $request)
     {
         Log::info(sprintf('Incoming Message Received' . $request['From'] . '📥 : %s', json_encode($request['Body'], JSON_PRETTY_PRINT)));
+         return response('OK', 200);
     }
 }
