@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Twilio\Rest\Client;
 
@@ -23,18 +24,19 @@ class TwilioController extends Controller
     public function handleIncomingMessage(Request $request)
     {
         Log::info(sprintf('Incoming Message Received' . $request['From'] . '📥 : %s', json_encode($request['Body'], JSON_PRETTY_PRINT)));
-        return $this->sendWhatsAppMessage($request['From'], "Hi Udisha! How can I help you today.");
+        $response =  $this->askChatGPT($request['Body']);
+        return $this->sendWhatsAppMessage($request['From'], $response);
         return response('OK', 200);
     }
 
-     private function sendWhatsAppMessage($to, $body)
+    private function sendWhatsAppMessage($to, $body)
     {
-        Log::info('From: '.$this->from.' To: '.$to.' Body: '.$body);
+        Log::info('From: ' . $this->from . ' To: ' . $to . ' Body: ' . $body);
         try {
-           $this->twilio->messages->create($to, [
-            "from" => "whatsapp:+14155238886",
-            "body" => $body,
-        ]);
+            $this->twilio->messages->create($to, [
+                "from" => "whatsapp:+14155238886",
+                "body" => $body,
+            ]);
         } catch (\Exception $e) {
             Log::info("WhatsApp message sent to $to: $body");
         }
@@ -42,5 +44,23 @@ class TwilioController extends Controller
 
         Log::info("WhatsApp message sent to $to: $body");
         return true;
+    }
+
+    private function askChatGPT($message)
+    {
+
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.openai.key'),
+        ])->post('https://api.openai.com/v1/chat/completions', [
+            'model' => 'gpt-3.5-turbo',
+            'messages' => [
+                ['role' => 'system', 'content' => 'You are a helpful assistant.'],
+                ['role' => 'user', 'content' => $message],
+            ],
+        ]);
+
+        $data = $response->json();
+        return $data['choices'][0]['message']['content'] ?? 'No response from ChatGPT.';
     }
 }
