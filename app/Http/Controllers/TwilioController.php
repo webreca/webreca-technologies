@@ -51,6 +51,7 @@ class TwilioController extends Controller
     private function askChatGPT($message)
     {
         try {
+            Log::info('🔑 OpenRouter Key: ' . config('services.openai.key'));
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('services.openai.key'),
                 'HTTP-Referer' => 'https://webreca.com/', // Required
