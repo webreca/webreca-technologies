@@ -64,6 +64,7 @@ class TwilioController extends Controller
         }
 
         $data = $response->json();
+       Log::info(sprintf('ChatGPT Response : %s', json_encode($response, JSON_PRETTY_PRINT)));
         return $data['choices'][0]['message']['content'] ?? 'No response from ChatGPT.';
     }
 }
