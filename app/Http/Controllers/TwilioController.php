@@ -37,7 +37,7 @@ class TwilioController extends Controller
     {
         try {
             $this->twilio->messages->create($to, [
-                "from" => $this->from,
+                "from" => "whatsapp:+14155238886",
                 "body" => $body,
             ]);
             Log::info("✅ WhatsApp message sent to $to: $body");
