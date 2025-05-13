@@ -14,44 +14,46 @@ class TwilioController extends Controller
 
     public function __construct()
     {
-        $sid            = config("twilio.api_keys.sid");
-        $token          = config("twilio.api_keys.token");
-        $this->twilio   = new Client($sid, $token);
-        $this->from     = "whatsapp:" . config("twilio.api_keys.from");
+        $sid = config("twilio.api_keys.sid");
+        $token = config("twilio.api_keys.token");
+        $this->twilio = new Client($sid, $token);
+        $this->from = "whatsapp:" . config("twilio.api_keys.from", "+14155238886");
     }
-
 
     public function handleIncomingMessage(Request $request)
     {
-        Log::info(sprintf('Incoming Message Received' . $request['From'] . '📥 : %s', json_encode($request['Body'], JSON_PRETTY_PRINT)));
-        $response =  $this->askChatGPT($request['Body']);
-        return $this->sendWhatsAppMessage($request['From'], $response);
+        $from = $request->input('From');
+        $body = $request->input('Body');
+
+        Log::info("📥 Incoming WhatsApp Message from {$from}: {$body}");
+
+        $response = $this->askChatGPT($body);
+        $this->sendWhatsAppMessage($from, $response);
+
         return response('OK', 200);
     }
 
     private function sendWhatsAppMessage($to, $body)
     {
-        Log::info('From: ' . $this->from . ' To: ' . $to . ' Body: ' . $body);
         try {
             $this->twilio->messages->create($to, [
-                "from" => "whatsapp:+14155238886",
+                "from" => $this->from,
                 "body" => $body,
             ]);
+            Log::info("✅ WhatsApp message sent to $to: $body");
         } catch (\Exception $e) {
-            Log::info("Twilio Sent Message Error", $e->getMessage());
+            Log::error("❌ Twilio Send Error: " . $e->getMessage());
         }
 
-
-        Log::info("WhatsApp message sent to $to: $body");
         return true;
     }
 
     private function askChatGPT($message)
     {
-
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('services.openai.key'),
+                'Content-Type' => 'application/json',
             ])->post('https://api.openai.com/v1/chat/completions', [
                 'model' => 'gpt-3.5-turbo',
                 'messages' => [
@@ -59,12 +61,21 @@ class TwilioController extends Controller
                     ['role' => 'user', 'content' => $message],
                 ],
             ]);
-        } catch (\Exception $e) {
-            Log::info("Chatgpt Error", $e->getMessage());
-        }
 
-        $data = $response->json();
-       Log::info(sprintf('ChatGPT Response : %s', json_encode($response, JSON_PRETTY_PRINT)));
-        return $data['choices'][0]['message']['content'] ?? 'No response from ChatGPT.';
+            if ($response->failed()) {
+                Log::error("❌ ChatGPT API failed: " . $response->body());
+                return "Sorry, I couldn't process your request.";
+            }
+
+            $data = $response->json();
+            $chatReply = $data['choices'][0]['message']['content'] ?? 'No response from ChatGPT.';
+
+            Log::info("🤖 ChatGPT Response: {$chatReply}");
+            return $chatReply;
+
+        } catch (\Exception $e) {
+            Log::error("❌ ChatGPT Error: " . $e->getMessage());
+            return "Sorry, something went wrong with ChatGPT.";
+        }
     }
 }
