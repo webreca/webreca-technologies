@@ -38,7 +38,7 @@ class TwilioController extends Controller
                 "body" => $body,
             ]);
         } catch (\Exception $e) {
-            Log::info("WhatsApp message sent to $to: $body");
+            Log::info("Twilio Sent Message Error", $e->getMessage());
         }
 
 
@@ -49,16 +49,19 @@ class TwilioController extends Controller
     private function askChatGPT($message)
     {
 
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('services.openai.key'),
-        ])->post('https://api.openai.com/v1/chat/completions', [
-            'model' => 'gpt-3.5-turbo',
-            'messages' => [
-                ['role' => 'system', 'content' => 'You are a helpful assistant.'],
-                ['role' => 'user', 'content' => $message],
-            ],
-        ]);
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . config('services.openai.key'),
+            ])->post('https://api.openai.com/v1/chat/completions', [
+                'model' => 'gpt-3.5-turbo',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'You are a helpful assistant.'],
+                    ['role' => 'user', 'content' => $message],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::info("Chatgpt Error", $e->getMessage());
+        }
 
         $data = $response->json();
         return $data['choices'][0]['message']['content'] ?? 'No response from ChatGPT.';
