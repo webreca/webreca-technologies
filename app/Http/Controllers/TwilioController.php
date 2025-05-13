@@ -27,7 +27,7 @@ class TwilioController extends Controller
 
         Log::info("📥 Incoming WhatsApp Message from {$from}: {$body}");
 
-        $response = $this->askChatGPT($body);
+        $response = $this->processUserResponse($body);
         $this->sendWhatsAppMessage($from, $response);
 
         return response('OK', 200);
@@ -79,5 +79,43 @@ class TwilioController extends Controller
             Log::error("❌ OpenRouter Error: " . $e->getMessage());
             return "Sorry, something went wrong with OpenRouter.";
         }
+    }
+
+    private function processUserResponse($response)
+    {
+        $response = strtolower(trim($response)); // Normalize input
+
+        $commands = [
+            "udisha" => fn() => "Hello Udisha! How can I help you today? 😊",
+            "hi" => fn() => "Hello! How can I help you today? 😊",
+            "hello" => fn() => "Hi there! 👋 What can I do for you?",
+            "hey" => fn() => "Hey! Ready to chat anytime!",
+            "how are you" => fn() => "I'm just code, but I'm running great! How about you?",
+            "what's your name" => fn() => "I'm your friendly Laravel chatbot. You can call me ChatBuddy 🤖",
+            "help" => fn() => "You can ask me about weather, time, general questions, or say 'joke', 'quote', 'time', etc.",
+            "joke" => fn() => "Why don't developers like nature? It has too many bugs! 🐛😂",
+            "quote" => fn() => "“The only way to do great work is to love what you do.” — Steve Jobs",
+            "time" => fn() => "Current server time is " . now()->format('H:i A'),
+            "date" => fn() => "Today's date is " . now()->format('l, F j, Y'),
+            "bye" => fn() => "Goodbye! Come back if you have more questions. 👋",
+            "thanks" => fn() => "You're welcome! 😊",
+            "thank you" => fn() => "Anytime! Let me know if you need more help.",
+            "who made you" => fn() => "I was built using Laravel and OpenRouter AI by my awesome developer!",
+            "what can you do" => fn() => "I can answer questions, tell jokes, show the time, and more. Try typing 'help'.",
+        ];
+
+        // Exact match
+        if (isset($commands[$response])) {
+            return $commands[$response]();
+        }
+
+        // Optional: Fallback to keyword search
+        foreach ($commands as $key => $callback) {
+            if (str_contains($response, $key)) {
+                return $callback();
+            }
+        }
+
+        return "Sorry, I didn't understand that. Try saying 'help' to see what I can do!";
     }
 }
