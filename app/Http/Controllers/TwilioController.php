@@ -53,8 +53,8 @@ class TwilioController extends Controller
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('services.openai.key'),
-                'HTTP-Referer' => 'https://yourdomain.com/', // Required
-                'X-Title' => 'LaravelApp', // Optional but recommended
+                'HTTP-Referer' => 'https://webreca.com/', // Required
+                'X-Title' => 'chatbot', // Optional but recommended
                 'Content-Type' => 'application/json',
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
                 'model' => 'mistralai/mixtral-8x7b', // Or another supported model
