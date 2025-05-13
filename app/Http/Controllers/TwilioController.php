@@ -67,7 +67,7 @@ class TwilioController extends Controller
 
             if ($response->failed()) {
                 Log::error("❌ OpenRouter API failed: " . $response->body());
-                return "Sorry, I couldn't process your request.";
+                return "👋 Hi Udisha , How can I help you today?";
             }
 
             $data = $response->json();
